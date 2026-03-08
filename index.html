@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAULT — Força de Senha</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <div class="logo">// Security Tool</div>
+    <h1 class="title">VAULT</h1>
+    <p class="subtitle">Analise e gere senhas à prova de invasores</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('checker')"> Verificar Senha</div>
+    <div class="tab" onclick="switchTab('generator')"> Gerar Senha</div>
+  </div>
+
+  <!-- ======== CHECKER PANEL ======== -->
+  <div class="panel active" id="panel-checker">
+    <div class="card">
+      <div class="card-label">// entrada</div>
+      <div class="input-wrap">
+        <input class="password-input" type="password" id="pwInput"
+               placeholder="Digite sua senha..." autocomplete="off"
+               oninput="analyzePassword(this.value)">
+        <button class="toggle-vis" onclick="toggleVisibility()" title="Mostrar/Ocultar">
+          <svg id="eye-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="strength-wrap">
+        <div class="strength-header">
+          <span class="strength-label">Força</span>
+          <span class="strength-value" id="strengthText" style="color: var(--muted)">— Aguardando</span>
+        </div>
+        <div class="strength-bar" id="strengthBar">
+          <div class="strength-seg"></div>
+          <div class="strength-seg"></div>
+          <div class="strength-seg"></div>
+          <div class="strength-seg"></div>
+          <div class="strength-seg"></div>
+        </div>
+      </div>
+
+      <div class="crack-display" id="crackDisplay">
+        <div class="crack-title">// tempo estimado para quebrar</div>
+        <div class="crack-time" id="crackTime" style="color: var(--muted)">—</div>
+        <div class="crack-desc" id="crackDesc">Digite uma senha para analisar</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box" id="stat-len">
+          <div class="stat-icon">📏</div>
+          <div class="stat-val" id="sv-len">—</div>
+          <div class="stat-name">Comprimento</div>
+        </div>
+        <div class="stat-box" id="stat-ent">
+          <div class="stat-icon">🎲</div>
+          <div class="stat-val" id="sv-ent">—</div>
+          <div class="stat-name">Entropia (bits)</div>
+        </div>
+        <div class="stat-box" id="stat-pool">
+          <div class="stat-icon">🔣</div>
+          <div class="stat-val" id="sv-pool">—</div>
+          <div class="stat-name">Pool de chars</div>
+        </div>
+        <div class="stat-box" id="stat-comb">
+          <div class="stat-icon">∞</div>
+          <div class="stat-val" id="sv-comb">—</div>
+          <div class="stat-name">Combinações</div>
+        </div>
+      </div>
+
+      <div class="card-label" style="margin-bottom:14px">// critérios</div>
+      <div class="checks-grid">
+        <div class="check-item" id="check-len"><div class="check-dot"></div>Mínimo 8 caracteres</div>
+        <div class="check-item" id="check-upper"><div class="check-dot"></div>Letras maiúsculas</div>
+        <div class="check-item" id="check-lower"><div class="check-dot"></div>Letras minúsculas</div>
+        <div class="check-item" id="check-num"><div class="check-dot"></div>Números</div>
+        <div class="check-item" id="check-sym"><div class="check-dot"></div>Símbolos especiais</div>
+        <div class="check-item" id="check-long"><div class="check-dot"></div>Mais de 14 caracteres</div>
+      </div>
+
+      <div class="breach-note" id="breachNote">
+        ⚠️ <span>Senha muito comum ou curta demais — usada em brechas de dados conhecidas. Troque imediatamente.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== GENERATOR PANEL ======== -->
+  <div class="panel" id="panel-generator">
+    <div class="card">
+      <div class="card-label">// senha gerada</div>
+      <div class="gen-output-wrap">
+        <div class="gen-output" id="genOutput">Clique em Gerar</div>
+        <div class="gen-actions">
+          <button class="icon-btn" onclick="copyGenerated()" title="Copiar">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+          </button>
+          <button class="icon-btn" onclick="generatePassword()" title="Regenerar">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-header">
+          <span class="slider-label">Comprimento</span>
+          <span class="slider-val" id="lenDisplay">16</span>
+        </div>
+        <div class="slider-controls">
+          <button class="step-btn" onclick="adjustLen(-1)">−</button>
+          <input type="range" id="lenSlider" min="4" max="128" value="16" oninput="onSliderChange()">
+          <button class="step-btn" onclick="adjustLen(1)">+</button>
+        </div>
+      </div>
+
+      <div class="card-label" style="margin-bottom:12px">// incluir</div>
+      <div class="options-grid">
+        <label class="opt-check checked" id="opt-upper">
+          <input type="checkbox" id="ch-upper" checked onchange="updateOpt(this)">
+          <div class="custom-check"><span class="checkmark">✓</span></div>
+          <span class="opt-text">Maiúsculas (A–Z)</span>
+        </label>
+        <label class="opt-check checked" id="opt-lower">
+          <input type="checkbox" id="ch-lower" checked onchange="updateOpt(this)">
+          <div class="custom-check"><span class="checkmark">✓</span></div>
+          <span class="opt-text">Minúsculas (a–z)</span>
+        </label>
+        <label class="opt-check checked" id="opt-num">
+          <input type="checkbox" id="ch-num" checked onchange="updateOpt(this)">
+          <div class="custom-check"><span class="checkmark">✓</span></div>
+          <span class="opt-text">Números (0–9)</span>
+        </label>
+        <label class="opt-check checked" id="opt-sym">
+          <input type="checkbox" id="ch-sym" checked onchange="updateOpt(this)">
+          <div class="custom-check"><span class="checkmark">✓</span></div>
+          <span class="opt-text">Símbolos (!@#$…)</span>
+        </label>
+        <label class="opt-check" id="opt-amb">
+          <input type="checkbox" id="ch-amb" onchange="updateOpt(this)">
+          <div class="custom-check"><span class="checkmark">✓</span></div>
+          <span class="opt-text">Evitar ambíguos (0Ol1)</span>
+        </label>
+        <label class="opt-check" id="opt-extra">
+          <input type="checkbox" id="ch-extra" onchange="updateOpt(this)">
+          <div class="custom-check"><span class="checkmark">✓</span></div>
+          <span class="opt-text">Símbolos extras ([]{})</span>
+        </label>
+      </div>
+
+      <button class="gen-btn" onclick="generatePassword()"> GERAR SENHA SEGURA</button>
+
+      <div class="entropy-wrap">
+        <div class="entropy-header">
+          <span>Entropia estimada</span>
+          <span id="gen-entropy-val" style="color: var(--accent)">— bits</span>
+        </div>
+        <div class="entropy-bar-bg">
+          <div class="entropy-bar-fill" id="gen-entropy-bar" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ COPIADO</div>
+<script src="script.js"></script>
+</body>
+</html>
